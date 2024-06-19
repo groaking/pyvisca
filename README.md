@@ -68,21 +68,21 @@ cam.home()
 cam.left()
 cam.up()
 cam.down()
-cam.right(7)  # --- adjust movement speed by specifying 0-7; defaults to 5
+cam.right(7)  # --- adjust movement speed by specifying 0-24; defaults to 5
 
 # Move the camera in two directions
 cam.left_up()
 cam.left_down()
 cam.right_up()
-cam.right_down(3, 7)  # --- adjust movement speed by specifying 0-7 into (pan, tilt) parameter
+cam.right_down(3, 7)  # --- adjust movement speed by specifying 0-24 into (pan, tilt) parameter
                       # ---defaults to (5, 5)
 
 # Relative movement
 # ---
 # relative_position(pan, tilt, amount_pan, amount_tilt, direction_pan, direction_tilt)
 # 
-# pan                       : pan speed (0-7)
-# tilt                      : tilt speed (0-7)
+# pan                       : pan speed (0-24)
+# tilt                      : tilt speed (0-24)
 # amount_pan, amount_tilt   : amount to move in pixels
 # direction_pan             : 1 = right, -1 = left
 # direction_tilt            : 1 = up,    -1 = down
@@ -102,10 +102,12 @@ cam.zoom_stop()
 # Adjust the iris of the camera (constant speed)
 cam.iris_up()
 cam.iris_down()
+cam.iris_reset()
 
 # Adjust the brightness of the camera (constant speed)
-cam.brightness_up()
-cam.brightness_down()
+cam.bright_up()
+cam.bright_down()
+cam.bright_reset()
 
 # Assign the current camera position to a preset (0-255)
 cam.preset_set(255)
@@ -134,6 +136,15 @@ cam.picture_effect_off()
 # Autofocus the camera
 cam.autofocus_sens_high()
 ```
+
+## Roadmap
+
+In the future versions, we plan to add the following feature commands:
+
+- Adjust camera gain
+- Adjust camera aperture
+- Turn backlight compensation on/off (on supported devices)
+- Freeze the current view
 
 ## Contributing
 

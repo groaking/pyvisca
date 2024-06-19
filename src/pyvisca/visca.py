@@ -15,24 +15,15 @@ class Camera(object):
     _output_string = None
     _input_string = None
 
-    def __init__(self, output='COM1'):
-        """Sony VISCA control class.
-
-        :param output: Outbound serial port string. (default: 'COM1')
+    def __init__(self, output='COM10'):
+        """General VISCA-based PTZ control class.
+        
+        Initializes camera object by connecting to serial port.
+        :param output: Outbound serial port string. (default: 'COM10')
         :type output: str
         """
-        self._output_string = output
-        # self._input_string = input
-
-    def init(self):
-        """Initializes camera object by connecting to serial port.
-
-        :return: Camera object.
-        :rtype: Camera
-        """
-        # self._input = serial.Serial(self._input_string)
-        self._output = serial.Serial(self._output_string)
-
+        self._output = serial.Serial(output)
+        
     def command(self, com):
         """Sends hexadecimal string to serial port.
 
@@ -88,10 +79,12 @@ class Camera(object):
         return total
 
 
-class D100(Camera):
-    """Sony EVI-D100 VISCA control class.
-
-    Further documentation on the VISCA protocol:
+class PTZ(Camera):
+    """Command class for general PTZ controller.
+    
+    In the original repo by Matthew Mage, it was initially
+    developed for Sony EVI-D100 VISCA control class.
+    Further documentation on the VISCA protocol (broken link):
     https://pro.sony.com/bbsccms/assets/files/mkt/remotemonitoring/manuals/rm-EVID100_technical_manual.pdf
     """
 
@@ -116,23 +109,15 @@ class D100(Camera):
     interp = None
 
     def __init__(self, output='COM1'):
-        """Sony VISCA control class.
-
+        """Instantiates the VISCA PTZ camera object.
+        
+        Then initializes camera object by connecting to serial port.
         :param output: Serial port string. (default: 'COM1')
         :type output: str
         """
         self.interp = interp1d([int(f[:-1], 16) for f in self.values], self.y)
         super(self.__class__, self).__init__(output=output)
-
-    def init(self):
-        """Initializes camera object by connecting to serial port.
-
-        :return: Camera object.
-        :rtype: Camera
-        """
-        super(self.__class__, self).init()
-        return self
-
+        
     def comm(self, com):
         """Sends hexadecimal string to serial port.
 
@@ -478,3 +463,120 @@ class D100(Camera):
         :rtype: bool
         """
         return self.comm('8101046308FF')
+    
+    def power(self, toggle=1):
+        """Turning the VISCA-based PTZ camera on or off.
+        
+        Defaults to "power on" if invalid option is specified.
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        if toggle == False or toggle == 0:
+            return self.comm('8101040003FF')
+        else:
+            return self.comm('8101040002FF')
+
+    def zoom_in(self, amount=5):
+        """Zooms the camera lens in.
+        
+        :param amount: Speed (0-7), default=5
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = 7 if int(hs, 16) > 7 else hs
+        hs = 0 if int(hs, 16) < 0 else hs
+        s = '810104072PFF'.replace('P', hs)
+        return self.comm(s)
+
+    def zoom_out(self, amount=5):
+        """Zooms the camera lens out.
+        
+        :param amount: Speed (0-7), default=5
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = 7 if int(hs, 16) > 7 else hs
+        hs = 0 if int(hs, 16) < 0 else hs
+        s = '810104073PFF'.replace('P', hs)
+        return self.comm(s)
+
+    def zoom_stop(self):
+        """Stops any ongoing zoom (tele/wide) movement.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040700FF')
+    
+    def iris_up(self):
+        """Turn up the camera's iris setting.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040B02FF')
+    
+    def iris_down(self):
+        """Turn down the camera's iris setting.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040B03FF')
+    
+    def iris_reset(self):
+        """Reset the camera's iris setting to default.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040B00FF')
+    
+    def bright_up(self):
+        """Turn up the camera's brightness.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040D02FF')
+    
+    def bright_down(self):
+        """Turn down the camera's brightness.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040D03FF')
+    
+    def bright_reset(self):
+        """Reset the camera's brightness setting to default.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040D00FF')
+    
+    def preset_set(self, memory):
+        """Set/save the current position of the PTZ into memory bank 0-255.
+        
+        :return: True if successful, False if not.
+        """
+        num = memory
+        num = 255 if num > 255 else num
+        num = 0 if num < 0 else num
+        # Convert 10-base decimal into hexadecimal
+        hex_string = "%X" % num
+        # Pad with zero, if less than two-digit
+        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
+        # Send the command
+        s = '8101043F01PPFF'.replace('PP', hex_string)
+        return self.comm(s)
+    
+    def preset_recall(self, memory):
+        """Recall the assigned PTZ position from the memory bank 0-255.
+        
+        :return: True if successful, False if not.
+        """
+        num = memory
+        num = 255 if num > 255 else num
+        num = 0 if num < 0 else num
+        # Convert 10-base decimal into hexadecimal
+        hex_string = "%X" % num
+        # Pad with zero, if less than two-digit
+        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
+        # Send the command
+        s = '8101043F02PPFF'.replace('PP', hex_string)
+        return self.comm(s)
