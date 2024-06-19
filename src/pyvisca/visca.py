@@ -8,7 +8,6 @@ import numpy as np
 import serial
 from scipy.interpolate import interp1d
 
-
 class Camera(object):
     _input = None
     _output = None

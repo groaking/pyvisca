@@ -1,4 +1,7 @@
-v0.0.1
+# pyvisca CHANGELOG
+
+## v0.0.1
+
 - Initial forking of the repository from the work by Matthew Mage
 - Added: Panning the camera left, up, right, and down
 - Added: Homing the camera position to its default position
@@ -7,7 +10,8 @@ v0.0.1
 - Added: Setting white balance
 - Added: Move relative to the current position
 
-v0.0.2
+## v0.0.2
+
 - Converted from Python 2.0 to Python 3.0
 - Added: Ability to zoom in/out the camera
 - Added: Ability to set and recall presets
