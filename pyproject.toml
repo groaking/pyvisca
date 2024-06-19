@@ -1,6 +1,6 @@
 [project]
 name = "pyvisca"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
     { name = "Samarthya Lykamanuella", email = "93555329+groaking@users.noreply.github.com" },
 ]
@@ -8,7 +8,6 @@ maintainers = [
     { name = "Samarthya Lykamanuella", email = "93555329+groaking@users.noreply.github.com" },
 ]
 dependencies = [
-  "numpy",
   "pyserial",
   "scipy",
 ]

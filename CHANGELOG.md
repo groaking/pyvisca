@@ -2,19 +2,26 @@
 
 ## v0.0.1
 
-- Initial forking of the repository from the work by Matthew Mage
-- Added: Panning the camera left, up, right, and down
-- Added: Homing the camera position to its default position
-- Added: Enabling autofocus of camera lens
-- Added: Setting picture effect (on supported devices only)
-- Added: Setting white balance
-- Added: Move relative to the current position
+- Info: Initial forking of the repository from the work by Matthew Mage
+- New: Panning the camera left, up, right, and down
+- New: Homing the camera position to its default position
+- New: Enabling autofocus of camera lens
+- New: Setting picture effect (on supported devices only)
+- New: Setting white balance
+- New: Move relative to the current position
 
 ## v0.0.2
 
-- Converted from Python 2.0 to Python 3.0
-- Added: Ability to zoom in/out the camera
-- Added: Ability to set and recall presets
-- Added: Ability to turn the PTZ camera on and off
-- Added: Ability to change iris setting
-- Added: Ability to change brightness setting
+- Info: Converted from Python 2.0 to Python 3.0
+- New: Ability to zoom in/out the camera
+- New: Ability to set and recall presets
+- New: Ability to turn the PTZ camera on and off
+- New: Ability to change iris setting
+- New: Ability to change brightness setting
+
+## v0.0.3
+
+- Fixed: Cannot close port when opened
+- New: Manual setting of camera focus
+- New: Manual adjustment of camera aperture
+- New: Toggling on/off of backlight compensation

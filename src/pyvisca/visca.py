@@ -4,7 +4,6 @@
 
 import re
 import binascii
-import numpy as np
 import serial
 from scipy.interpolate import interp1d
 
@@ -39,15 +38,15 @@ class Camera(object):
             return False
 
     @staticmethod
-    def close(serial_port):
+    def close():
         """Closes current serial port.
 
         :param serial_port: Serial port to modify.
         :return: True if successful, False if not.
         :rtype: bool
         """
-        if serial_port.isOpen():
-            serial_port.close()
+        if self._output.isOpen():
+            self._output.close()
             return True
         else:
             print("Error closing serial port: Already closed.")
@@ -61,13 +60,14 @@ class Camera(object):
         :return: True if successful, False if not.
         :rtype: bool
         """
-        if not serial_port.isOpen():
-            serial_port.open()
+        if not self._output.isOpen():
+            self._output = serial.Serial(serial_port)
+            self._output.open()
             return True
         else:
             print("Error opening serial port: Already open.")
             return False
-
+        
     def read(self, amount=3):
         total = ""
         while True:
@@ -126,28 +126,6 @@ class PTZ(Camera):
         :rtype: bool
         """
         super(self.__class__, self).command(com)
-
-    def focus_near(self):
-        self.command('81090448FF')
-        msg = self.read(7)[4:-2]
-        r = ""
-        if len(msg) == 8:
-            for x in range(1, 9, 2):
-                r += msg[x]
-            x = int(r, 16)
-            if x < 4449 or x > 33473:
-                return None
-            return self.interp(x)
-        return None
-
-    def test(self, lr=(5.5, 0), ud=(0, 0), angle=0):
-        [5.5, ]
-        dis = 0.391886608016
-        left, right = lr
-        up, down = ud
-        coeff = np.cos(angle)
-
-        movement = (left * dis * 148.466, )
 
     @staticmethod
     def multi_replace(text, rep):
@@ -579,3 +557,67 @@ class PTZ(Camera):
         # Send the command
         s = '8101043F02PPFF'.replace('PP', hex_string)
         return self.comm(s)
+
+    def focus_near(self, amount=5):
+        """Focuses the camera to "near"
+        
+        :param amount: Speed (0-7), default=5
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = 7 if int(hs, 16) > 7 else hs
+        hs = 0 if int(hs, 16) < 0 else hs
+        s = '810104083PFF'.replace('P', hs)
+        return self.comm(s)
+
+    def focus_far(self, amount=5):
+        """Focuses the camera to "far"
+        
+        :param amount: Speed (0-7), default=5
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = 7 if int(hs, 16) > 7 else hs
+        hs = 0 if int(hs, 16) < 0 else hs
+        s = '810104082PFF'.replace('P', hs)
+        return self.comm(s)
+
+    def focus_stop(self):
+        """Stops any ongoing focus (near/far) movement.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040800FF')
+    
+    def backlight(self, toggle=1):
+        """Turning the backlight compensation on/off.
+        
+        Defaults to "on" if invalid option is specified.
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        if toggle == False or toggle == 0:
+            return self.comm('8101043303FF')
+        else:
+            return self.comm('8101043302FF')
+    
+    def aperture_up(self):
+        """Turn up the camera's aperture value (non-variable).
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040202FF')
+    
+    def aperture_down(self):
+        """Turn down the camera's aperture value (non-variable).
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040203FF')
+    
+    def aperture_reset(self):
+        """Reset the camera's aperture to default value.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040200FF')

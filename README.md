@@ -52,7 +52,7 @@ from pyvisca import visca
 
 # Instantiating a new VISCA PTZ object
 # This also automatically initializes and connects to the serial port
-cam = visca.PTZ('/dev/ttyS0')
+cam = visca.PTZ('/dev/ttyUSB0')
 # Windows users may need to run the following command instead
 # cam = visca.PTZ('COM10')
 
@@ -133,8 +133,26 @@ cam.picture_effect_stretch()
 # Turn off picture effect
 cam.picture_effect_off()
 
+# Turn on backlight compensation
+# ("0" or "False" to turn off)
+cam.backlight(1)
+
 # Autofocus the camera
-cam.autofocus_sens_high()
+cam.autofocus()
+cam.autofocus_sens_high()  # --- high sensitivity autofocus
+cam.autofocus_sens_low()  # --- low sensitivity autofocus
+
+# Manual focus of the camera
+cam.focus_near()
+cam.focus_far(3)  # --- adjust zooming speed by specifying 0-7; defaults to 5
+
+# Stop any ongoing adjustment of camera focus
+cam.focus_stop()
+
+# Adjust the camera's aperture
+cam.aperture_up()
+cam.aperture_down()
+cam.aperture_reset()
 ```
 
 ## Roadmap
@@ -142,9 +160,9 @@ cam.autofocus_sens_high()
 In the future versions, we plan to add the following feature commands:
 
 - Adjust camera gain
-- Adjust camera aperture
-- Turn backlight compensation on/off (on supported devices)
 - Freeze the current view
+- ✔️ Adjust camera aperture
+- ✔️ Turn backlight compensation on/off (on supported devices)
 
 ## Contributing
 
@@ -156,4 +174,4 @@ You can also contribute by opening an issue, proposing a new feature, and creati
 
 The original work of this library is due to [Matthew Mage](https://github.com/Sciguymjm).
 
-We refer to the following reference manual in developing this library: [`https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm`](https://web.archive.org/*/https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm).
+We refer to the following reference manual in developing this library: [`https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm`](https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm).
