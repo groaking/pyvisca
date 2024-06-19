@@ -155,6 +155,10 @@ cam.aperture_down()
 cam.aperture_reset()
 ```
 
+## Examples
+
+More examples can be found in the repository's [example folder](https://github.com/groaking/pyvisca/tree/main/examples).
+
 ## Roadmap
 
 In the future versions, we plan to add the following feature commands:
@@ -166,7 +170,7 @@ In the future versions, we plan to add the following feature commands:
 
 ## Contributing
 
-If you find this library helpful, feel free to star this repository.
+If you find this library helpful, feel free to star [this repository](https://github.com/groaking/pyvisca).
 
 You can also contribute by opening an issue, proposing a new feature, and creating a new pull request in this repository.
 
