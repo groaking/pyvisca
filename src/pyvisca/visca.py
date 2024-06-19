@@ -1,17 +1,24 @@
-# SOURCE: https://github.com/Sciguymjm/python-visca
-# VISCA Command Documentation on:
-# https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm
+# -*- coding: utf-8 -*-
+# 
+# The main script module file to control PTZ cameras based on VISCA serial protocol
+# By Samarthya Lykamanuella
+# Licensed under GPL-3.0
+# ---
+# Original work of this library is due to Matthew Mage
+# -> SOURCE: https://github.com/Sciguymjm/python-visca
+# VISCA command documentation was obtained from Crestron
+# -> SOURCE: https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm
 
-import re
-import binascii
-import serial
 from scipy.interpolate import interp1d
+import binascii
+import re
+import serial
 
 class Camera(object):
     _input = None
+    _input_string = None
     _output = None
     _output_string = None
-    _input_string = None
 
     def __init__(self, output='COM10'):
         """General VISCA-based PTZ control class.
@@ -21,21 +28,6 @@ class Camera(object):
         :type output: str
         """
         self._output = serial.Serial(output)
-        
-    def command(self, com):
-        """Sends hexadecimal string to serial port.
-
-        :param com: Command string. Hexadecimal format.
-        :type com: str
-        :return: Success.
-        :rtype: bool
-        """
-        try:
-            self._output.write(binascii.unhexlify(com))
-            return True
-        except Exception as e:
-            print(com, e)
-            return False
 
     @staticmethod
     def close():
@@ -50,6 +42,21 @@ class Camera(object):
             return True
         else:
             print("Error closing serial port: Already closed.")
+            return False
+        
+    def command(self, com):
+        """Sends hexadecimal string to serial port.
+
+        :param com: Command string. Hexadecimal format.
+        :type com: str
+        :return: Success.
+        :rtype: bool
+        """
+        try:
+            self._output.write(binascii.unhexlify(com))
+            return True
+        except Exception as e:
+            print(com, e)
             return False
 
     @staticmethod
@@ -87,6 +94,8 @@ class PTZ(Camera):
     https://pro.sony.com/bbsccms/assets/files/mkt/remotemonitoring/manuals/rm-EVID100_technical_manual.pdf
     """
 
+    interp = None
+
     values = ["1161h", "116Dh", "122Ah", "123Ch", "12F3h", "13C2h", "151Eh", "1536h", "1844h", "226Fh", "3F2Ah",
               "40AAh", "62C9h", "82C1h"]
     y = [
@@ -105,8 +114,6 @@ class PTZ(Camera):
         0.5,
         0.1]
 
-    interp = None
-
     def __init__(self, output='COM1'):
         """Instantiates the VISCA PTZ camera object.
         
@@ -116,6 +123,100 @@ class PTZ(Camera):
         """
         self.interp = interp1d([int(f[:-1], 16) for f in self.values], self.y)
         super(self.__class__, self).__init__(output=output)
+
+    def _move(self, string, a1, a2):
+        h1 = "%X" % a1
+        h1 = '0' + h1 if len(h1) < 2 else h1
+
+        h2 = "%X" % a2
+        h2 = '0' + h2 if len(h2) < 2 else h2
+        return self.comm(string.replace('VV', h1).replace('WW', h2))
+    
+    def aperture_down(self):
+        """Turn down the camera's aperture value (non-variable).
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040203FF')
+    
+    def aperture_reset(self):
+        """Reset the camera's aperture to default value.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040200FF')
+    
+    def aperture_up(self):
+        """Turn up the camera's aperture value (non-variable).
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040202FF')
+
+    def autofocus(self):
+        """Turns autofocus on.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101043802FF')
+
+    def autofocus_sens_high(self):
+        """Changes autofocus sensitivity to high.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101045802FF')
+
+    def autofocus_sens_low(self):
+        """Changes autofocus sensitivity to low.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101045803FF')
+    
+    def backlight(self, toggle=1):
+        """Turning the backlight compensation on/off.
+        
+        Defaults to "on" if invalid option is specified.
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        if toggle == False or toggle == 0:
+            return self.comm('8101043303FF')
+        else:
+            return self.comm('8101043302FF')
+    
+    def bright_down(self):
+        """Turn down the camera's brightness.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040D03FF')
+    
+    def bright_reset(self):
+        """Reset the camera's brightness setting to default.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040D00FF')
+    
+    def bright_up(self):
+        """Turn up the camera's brightness.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040D02FF')
+
+    def cancel(self):
+        """Cancels current command.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('81010001FF')
         
     def comm(self, com):
         """Sends hexadecimal string to serial port.
@@ -126,6 +227,113 @@ class PTZ(Camera):
         :rtype: bool
         """
         super(self.__class__, self).command(com)
+
+    def down(self, amount=5):
+        """Modifies tilt to down.
+
+        :param amount: Speed (0-24)
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = '0' + hs if len(hs) < 2 else hs
+        s = '81010601VVWW0302FF'.replace('VV', str(15)).replace('WW', hs)
+        return self.comm(s)
+
+    def exposure_full_auto(self):
+        """Changes exposure to full-auto.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101043900FF')
+
+    def focus_far(self, amount=5):
+        """Focuses the camera to "far"
+        
+        :param amount: Speed (0-7), default=5
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = 7 if int(hs, 16) > 7 else hs
+        hs = 0 if int(hs, 16) < 0 else hs
+        s = '810104082PFF'.replace('P', hs)
+        return self.comm(s)
+
+    def focus_near(self, amount=5):
+        """Focuses the camera to "near"
+        
+        :param amount: Speed (0-7), default=5
+        :return: True if successful, False if not.
+        """
+        hs = "%X" % amount
+        hs = 7 if int(hs, 16) > 7 else hs
+        hs = 0 if int(hs, 16) < 0 else hs
+        s = '810104083PFF'.replace('P', hs)
+        return self.comm(s)
+
+    def focus_stop(self):
+        """Stops any ongoing focus (near/far) movement.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040800FF')
+
+    def get_speed(self, amount=5):
+
+        self.comm('81090611FF')
+        return super(self.__class__, self).read(amount=amount)
+
+    def get_status(self, amount=5):
+
+        self.comm('81090610FF')
+        return super(self.__class__, self).read(amount=amount)
+
+    def home(self):
+        """Moves camera to home position.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('81010604FF')
+    
+    def iris_down(self):
+        """Turn down the camera's iris setting.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040B03FF')
+    
+    def iris_reset(self):
+        """Reset the camera's iris setting to default.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040B00FF')
+    
+    def iris_up(self):
+        """Turn up the camera's iris setting.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040B02FF')
+
+    def left(self, amount=5):
+        """Modifies pan speed to left.
+
+        :param amount: Speed (0-24)
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        hex_string = "%X" % amount
+        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
+        s = '81010601VVWW0103FF'.replace('VV', hex_string).replace('WW', str(15))
+        return self.comm(s)
+
+    def left_down(self, pan=5, tilt=5):
+        return self._move('81010601VVWW0102FF', pan, tilt)
+
+    def left_up(self, pan=5, tilt=5):
+        return self._move('81010601VVWW0101FF', pan, tilt)
 
     @staticmethod
     def multi_replace(text, rep):
@@ -141,6 +349,122 @@ class PTZ(Camera):
         rep = dict((re.escape(k), v) for k, v in rep.items())
         pattern = re.compile("|".join(list(rep.keys())))
         return pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
+
+    def picture_effect_b_w(self):
+        """Black and white picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046304FF')
+
+    def picture_effect_mosaic(self):
+        """Mosaic picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046306FF')
+
+    def picture_effect_negative(self):
+        """Negative picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046302FF')
+
+    def picture_effect_off(self):
+        """Off picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046300FF')
+
+    def picture_effect_pastel(self):
+        """Pastel picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046301FF')
+
+    def picture_effect_sepia(self):
+        """Sepia picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046303FF')
+
+    def picture_effect_slim(self):
+        """Slim picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046307FF')
+
+    def picture_effect_solarize(self):
+        """Solarize picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046305FF')
+
+    def picture_effect_stretch(self):
+        """Stretch picture effect.
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101046308FF')
+    
+    def power(self, toggle=1):
+        """Turning the VISCA-based PTZ camera on or off.
+        
+        Defaults to "power on" if invalid option is specified.
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        if toggle == False or toggle == 0:
+            return self.comm('8101040003FF')
+        else:
+            return self.comm('8101040002FF')
+    
+    def preset_recall(self, memory):
+        """Recall the assigned PTZ position from the memory bank 0-255.
+        
+        :return: True if successful, False if not.
+        """
+        num = memory
+        num = 255 if num > 255 else num
+        num = 0 if num < 0 else num
+        # Convert 10-base decimal into hexadecimal
+        hex_string = "%X" % num
+        # Pad with zero, if less than two-digit
+        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
+        # Send the command
+        s = '8101043F02PPFF'.replace('PP', hex_string)
+        return self.comm(s)
+    
+    def preset_set(self, memory):
+        """Set/save the current position of the PTZ into memory bank 0-255.
+        
+        :return: True if successful, False if not.
+        """
+        num = memory
+        num = 255 if num > 255 else num
+        num = 0 if num < 0 else num
+        # Convert 10-base decimal into hexadecimal
+        hex_string = "%X" % num
+        # Pad with zero, if less than two-digit
+        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
+        # Send the command
+        s = '8101043F01PPFF'.replace('PP', hex_string)
+        return self.comm(s)
 
     def relative_position(self, pan, tilt, amount_pan, amount_tilt, direction_pan=1, direction_tilt=1):
         """Moves camera relative to current position.
@@ -179,14 +503,6 @@ class PTZ(Camera):
         position_string = self.multi_replace(position_string, rep)
         return self.comm(position_string)
 
-    def home(self):
-        """Moves camera to home position.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('81010604FF')
-
     def reset(self):
         """Resets camera.
 
@@ -194,52 +510,6 @@ class PTZ(Camera):
         :rtype: bool
         """
         return self.comm('81010605FF')
-
-    def stop(self):
-        """Stops camera movement (pan/tilt).
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101060115150303FF')
-
-    def cancel(self):
-        """Cancels current command.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('81010001FF')
-
-    def get_status(self, amount=5):
-
-        self.comm('81090610FF')
-        return super(self.__class__, self).read(amount=amount)
-
-    def get_speed(self, amount=5):
-
-        self.comm('81090611FF')
-        return super(self.__class__, self).read(amount=amount)
-
-    def _move(self, string, a1, a2):
-        h1 = "%X" % a1
-        h1 = '0' + h1 if len(h1) < 2 else h1
-
-        h2 = "%X" % a2
-        h2 = '0' + h2 if len(h2) < 2 else h2
-        return self.comm(string.replace('VV', h1).replace('WW', h2))
-
-    def left(self, amount=5):
-        """Modifies pan speed to left.
-
-        :param amount: Speed (0-24)
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        hex_string = "%X" % amount
-        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
-        s = '81010601VVWW0103FF'.replace('VV', hex_string).replace('WW', str(15))
-        return self.comm(s)
 
     def right(self, amount=5):
         """Modifies pan speed to right.
@@ -252,6 +522,20 @@ class PTZ(Camera):
         s = '81010601VVWW0203FF'.replace('VV', hex_string).replace('WW', str(15))
         return self.comm(s)
 
+    def right_down(self, pan=5, tilt=5):
+        return self._move('81010601VVWW0202FF', pan, tilt)
+
+    def right_up(self, pan=5, tilt=5):
+        return self._move('81010601VVWW0201FF', pan, tilt)
+
+    def stop(self):
+        """Stops camera movement (pan/tilt).
+
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        return self.comm('8101060115150303FF')
+
     def up(self, amount=5):
         """Modifies tilt speed to up.
 
@@ -262,88 +546,6 @@ class PTZ(Camera):
         hs = '0' + hs if len(hs) < 2 else hs
         s = '81010601VVWW0301FF'.replace('VV', str(15)).replace('WW', hs)
         return self.comm(s)
-
-    def down(self, amount=5):
-        """Modifies tilt to down.
-
-        :param amount: Speed (0-24)
-        :return: True if successful, False if not.
-        """
-        hs = "%X" % amount
-        hs = '0' + hs if len(hs) < 2 else hs
-        s = '81010601VVWW0302FF'.replace('VV', str(15)).replace('WW', hs)
-        return self.comm(s)
-
-    def left_up(self, pan=5, tilt=5):
-        return self._move('81010601VVWW0101FF', pan, tilt)
-
-    def right_up(self, pan=5, tilt=5):
-        return self._move('81010601VVWW0201FF', pan, tilt)
-
-    def left_down(self, pan=5, tilt=5):
-        return self._move('81010601VVWW0102FF', pan, tilt)
-
-    def right_down(self, pan=5, tilt=5):
-        return self._move('81010601VVWW0202FF', pan, tilt)
-
-    def exposure_full_auto(self):
-        """Changes exposure to full-auto.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101043900FF')
-
-    def autofocus_sens_high(self):
-        """Changes autofocus sensitivity to high.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101045802FF')
-
-    def autofocus_sens_low(self):
-        """Changes autofocus sensitivity to low.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101045803FF')
-
-    def autofocus(self):
-        """Turns autofocus on.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101043802FF')
-
-    def wide_off(self):
-        """Wide mode setting: Off
-
-        Returns to original 640x480 resolution.
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046000FF')
-
-    def wide_cinema(self):
-        """Wide mode setting: Cinema
-
-        Places black bars above and below picture. Otherwise maintains resolution.
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046001FF')
-
-    def wide_169(self):
-        """Wide mode setting: 16:9
-
-        Stretches picture to 16:9 format.
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046002FF')
 
     def white_balance_auto(self):
         """White balance: Automatic mode
@@ -369,89 +571,32 @@ class PTZ(Camera):
         """
         return self.comm('8101043502FF')
 
-    def picture_effect_off(self):
-        """Off picture effect.
+    def wide_169(self):
+        """Wide mode setting: 16:9
 
+        Stretches picture to 16:9 format.
         :return: True if successful, False if not.
         :rtype: bool
         """
-        return self.comm('8101046300FF')
+        return self.comm('8101046002FF')
 
-    def picture_effect_pastel(self):
-        """Pastel picture effect.
+    def wide_cinema(self):
+        """Wide mode setting: Cinema
 
+        Places black bars above and below picture. Otherwise maintains resolution.
         :return: True if successful, False if not.
         :rtype: bool
         """
-        return self.comm('8101046301FF')
+        return self.comm('8101046001FF')
 
-    def picture_effect_negative(self):
-        """Negative picture effect.
+    def wide_off(self):
+        """Wide mode setting: Off
 
+        Returns to original 640x480 resolution.
         :return: True if successful, False if not.
         :rtype: bool
         """
-        return self.comm('8101046302FF')
-
-    def picture_effect_sepia(self):
-        """Sepia picture effect.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046303FF')
-
-    def picture_effect_b_w(self):
-        """Black and white picture effect.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046304FF')
-
-    def picture_effect_solarize(self):
-        """Solarize picture effect.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046305FF')
-
-    def picture_effect_mosaic(self):
-        """Mosaic picture effect.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046306FF')
-
-    def picture_effect_slim(self):
-        """Slim picture effect.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046307FF')
-
-    def picture_effect_stretch(self):
-        """Stretch picture effect.
-
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        return self.comm('8101046308FF')
-    
-    def power(self, toggle=1):
-        """Turning the VISCA-based PTZ camera on or off.
-        
-        Defaults to "power on" if invalid option is specified.
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        if toggle == False or toggle == 0:
-            return self.comm('8101040003FF')
-        else:
-            return self.comm('8101040002FF')
+        return self.comm('8101046000FF')
 
     def zoom_in(self, amount=5):
         """Zooms the camera lens in.
@@ -483,141 +628,3 @@ class PTZ(Camera):
         :return: True if successful, False if not.
         """
         return self.comm('8101040700FF')
-    
-    def iris_up(self):
-        """Turn up the camera's iris setting.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040B02FF')
-    
-    def iris_down(self):
-        """Turn down the camera's iris setting.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040B03FF')
-    
-    def iris_reset(self):
-        """Reset the camera's iris setting to default.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040B00FF')
-    
-    def bright_up(self):
-        """Turn up the camera's brightness.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040D02FF')
-    
-    def bright_down(self):
-        """Turn down the camera's brightness.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040D03FF')
-    
-    def bright_reset(self):
-        """Reset the camera's brightness setting to default.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040D00FF')
-    
-    def preset_set(self, memory):
-        """Set/save the current position of the PTZ into memory bank 0-255.
-        
-        :return: True if successful, False if not.
-        """
-        num = memory
-        num = 255 if num > 255 else num
-        num = 0 if num < 0 else num
-        # Convert 10-base decimal into hexadecimal
-        hex_string = "%X" % num
-        # Pad with zero, if less than two-digit
-        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
-        # Send the command
-        s = '8101043F01PPFF'.replace('PP', hex_string)
-        return self.comm(s)
-    
-    def preset_recall(self, memory):
-        """Recall the assigned PTZ position from the memory bank 0-255.
-        
-        :return: True if successful, False if not.
-        """
-        num = memory
-        num = 255 if num > 255 else num
-        num = 0 if num < 0 else num
-        # Convert 10-base decimal into hexadecimal
-        hex_string = "%X" % num
-        # Pad with zero, if less than two-digit
-        hex_string = '0' + hex_string if len(hex_string) < 2 else hex_string
-        # Send the command
-        s = '8101043F02PPFF'.replace('PP', hex_string)
-        return self.comm(s)
-
-    def focus_near(self, amount=5):
-        """Focuses the camera to "near"
-        
-        :param amount: Speed (0-7), default=5
-        :return: True if successful, False if not.
-        """
-        hs = "%X" % amount
-        hs = 7 if int(hs, 16) > 7 else hs
-        hs = 0 if int(hs, 16) < 0 else hs
-        s = '810104083PFF'.replace('P', hs)
-        return self.comm(s)
-
-    def focus_far(self, amount=5):
-        """Focuses the camera to "far"
-        
-        :param amount: Speed (0-7), default=5
-        :return: True if successful, False if not.
-        """
-        hs = "%X" % amount
-        hs = 7 if int(hs, 16) > 7 else hs
-        hs = 0 if int(hs, 16) < 0 else hs
-        s = '810104082PFF'.replace('P', hs)
-        return self.comm(s)
-
-    def focus_stop(self):
-        """Stops any ongoing focus (near/far) movement.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040800FF')
-    
-    def backlight(self, toggle=1):
-        """Turning the backlight compensation on/off.
-        
-        Defaults to "on" if invalid option is specified.
-        :return: True if successful, False if not.
-        :rtype: bool
-        """
-        if toggle == False or toggle == 0:
-            return self.comm('8101043303FF')
-        else:
-            return self.comm('8101043302FF')
-    
-    def aperture_up(self):
-        """Turn up the camera's aperture value (non-variable).
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040202FF')
-    
-    def aperture_down(self):
-        """Turn down the camera's aperture value (non-variable).
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040203FF')
-    
-    def aperture_reset(self):
-        """Reset the camera's aperture to default value.
-        
-        :return: True if successful, False if not.
-        """
-        return self.comm('8101040200FF')
