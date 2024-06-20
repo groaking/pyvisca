@@ -277,14 +277,47 @@ class PTZ(Camera):
         :return: True if successful, False if not.
         """
         return self.comm('8101040800FF')
+    
+    def freeze(self, toggle=1):
+        """Freeze the camera immediately on or off.
+        
+        Defaults to "freeze on" if invalid option is specified.
+        :return: True if successful, False if not.
+        :rtype: bool
+        """
+        if toggle == False or toggle == 0:
+            return self.comm('8101046203FF')
+        else:
+            return self.comm('8101046202FF')
+    
+    def gain_down(self):
+        """Turn down the camera's gain (non-variable).
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040C03FF')
+    
+    def gain_reset(self):
+        """Reset the camera's gain value to default.
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040C00FF')
+    
+    def gain_up(self):
+        """Turn up the camera's gain (non-variable).
+        
+        :return: True if successful, False if not.
+        """
+        return self.comm('8101040C02FF')
 
     def get_speed(self, amount=5):
-
+        
         self.comm('81090611FF')
         return super(self.__class__, self).read(amount=amount)
 
     def get_status(self, amount=5):
-
+        
         self.comm('81090610FF')
         return super(self.__class__, self).read(amount=amount)
 
