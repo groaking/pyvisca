@@ -11,15 +11,20 @@ In **pyvisca**, we have converted the source code to make it compatible with Pyt
 - Ability to turn the PTZ camera on and off
 - Ability to change iris setting
 - Ability to change brightness setting
+- Manually changing the camera focus
+- Adjusting the camera's aperture value
+- Adjusting the camera's gain value
+- Turning on/off backlight compensation (on supported devices)
+- Freezing the current camera view
 
-In addition, the following commands are already present in the original work by Matthew Mage:
+The following commands were already present in the original work by Matthew Mage:
 
 - Panning the camera left, up, right, and down
 - Homing the camera position to its default position
 - Enabling autofocus of camera lens
 - Setting picture effect (on supported devices only)
 - Setting white balance
-- Move relative to the current position
+- Moving the camera pan/tilt relative to the current position
 
 Note that not every command can be executed in any given PTZ camera. Please refer to your VISCA-compatible PTZ camera's specification to see which commands and features are available.
 
@@ -153,6 +158,17 @@ cam.focus_stop()
 cam.aperture_up()
 cam.aperture_down()
 cam.aperture_reset()
+
+# Adjust the camera's gain
+cam.gain_up()
+cam.gain_down()
+cam.gain_reset()
+
+# Freeze the camera ("1" or "True")
+cam.freeze(1)
+
+# Unfreeze the camera ("0" or "False")
+cam.freeze(0)
 ```
 
 ## Examples
@@ -163,8 +179,8 @@ More examples can be found in the repository's [example folder](https://github.c
 
 In the future versions, we plan to add the following feature commands:
 
-- Adjust camera gain
-- Freeze the current view
+- ✔️ Adjust camera gain
+- ✔️ Freeze the current view
 - ✔️ Adjust camera aperture
 - ✔️ Turn backlight compensation on/off (on supported devices)
 
@@ -178,4 +194,4 @@ You can also contribute by opening an issue, proposing a new feature, and creati
 
 The original work of this library is due to [Matthew Mage](https://github.com/Sciguymjm).
 
-We refer to the following reference manual in developing this library: [`https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm`](https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm).
+We refer to the following reference manual in developing this library: [https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm](https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm).

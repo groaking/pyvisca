@@ -25,3 +25,8 @@
 - New: Manual setting of camera focus
 - New: Manual adjustment of camera aperture
 - New: Toggling on/off of backlight compensation
+
+## v0.0.4
+
+- New: Manual adjustment of camera's gain control
+- New: Freezing the camera view
