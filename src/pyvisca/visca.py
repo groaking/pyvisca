@@ -10,6 +10,7 @@
 # -> SOURCE: https://docs.crestron.com/en-us/9326/Content/Topics/Configuration/VISCA-Comands.htm
 
 from scipy.interpolate import interp1d
+from time import sleep
 import binascii
 import re
 import serial
@@ -75,15 +76,14 @@ class Camera(object):
             print("Error opening serial port: Already open.")
             return False
         
-    def read(self, amount=3):
-        total = ""
-        while True:
-            msg = binascii.hexlify(self._output.read())
-            total = total + msg
-            if msg == "ff":
-                break
-        return total
-
+    def read(self):
+        '''When receiving an input buffer, this function reads all pending input bytes.
+        '''
+        msg = binascii.hexlify( self._output.read_all() )
+        # Remove bothering "b" prefix
+        msg = str(msg).replace('b\'', '').replace('\'', '')
+        
+        return msg
 
 class PTZ(Camera):
     """Command class for general PTZ controller.
@@ -318,7 +318,8 @@ class PTZ(Camera):
 
     def get_status(self, amount=5):
         
-        self.comm('81090610FF')
+        #self.comm('81090610FF')
+        self.comm('81090612FF')
         return super(self.__class__, self).read(amount=amount)
 
     def home(self):
@@ -328,6 +329,26 @@ class PTZ(Camera):
         :rtype: bool
         """
         return self.comm('81010604FF')
+    
+    def inq(self, com):
+        """Sends an inquiry message into the VISCA PTZ camera,
+        then return any pending response buffer that comes afterwards.
+        
+        :param com: Command string (inquiry message). Hexadecimal format.
+        :return: A string comprising the response packets.
+        """
+        # Send the inquiry message
+        super(self.__class__, self).command(com)
+        
+        # Wait until any response packet is received
+        x = ''
+        while x == '':
+            x = super(self.__class__, self).read()
+            if x != '':
+                break
+        
+        # Return the response packet
+        return x
     
     def iris_down(self):
         """Turn down the camera's iris setting.

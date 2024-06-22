@@ -30,3 +30,8 @@
 
 - New: Manual adjustment of camera's gain control
 - New: Freezing the camera view
+
+## v0.0.5
+
+- Fixed: TypeError when trying to read input package from PTZ
+- Added: Ability to send inquiry and directly receive input package
