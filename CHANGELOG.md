@@ -1,5 +1,9 @@
 # pyvisca CHANGELOG
 
+## v0.1.2
+- New: Ability to get the current absolute zoom value
+- New: Ability to set absolute and relative zoom values
+
 ## v0.1.1
 
 - New: Ability to get the current absolute pan and tilt values

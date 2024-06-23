@@ -77,13 +77,18 @@ class Camera(object):
             return False
         
     def read(self):
-        '''When receiving an input buffer, this function reads all pending input bytes.
-        '''
+        """When receiving an input buffer, this function reads all pending input bytes.
+        """
         msg = binascii.hexlify( self._output.read_all() )
         # Remove bothering "b" prefix
         msg = str(msg).replace('b\'', '').replace('\'', '')
         
         return msg
+    
+    def reset_input_buffer(self):
+        """Reset the input buffer of the PTZ.
+        """
+        self._output.reset_input_buffer()
 
 class PTZ(Camera):
     """Command class for general PTZ controller.
@@ -371,6 +376,9 @@ class PTZ(Camera):
         :param com: Command string (inquiry message). Hexadecimal format.
         :return: A string comprising the response packets.
         """
+        # Clear any existing previous pending input buffer
+        super(self.__class__, self).reset_input_buffer()
+        
         # Send the inquiry message
         super(self.__class__, self).command(com)
         
@@ -619,13 +627,17 @@ class PTZ(Camera):
     def set_pan(self, val=0, speed=5):
         """Manually set the PTZ's absolute pan position.
         
-        :param val: In integer, the absolute pan position (0-65535).
+        :param val: In integer, the absolute pan position (from -32767 to 32767).
         :param speed: In integer, the speed of the movement (0-24).
         :return: True if successful, False if not.
         """
-        if val < 0 or val > 65535 or type(val) != int:
+        if val < -32767 or val > 32767 or type(val) != int:
             print('Invalid absolute pan value')
             return False
+        
+        # Calculating the parameter values
+        if val < 0:
+            val = 65535 + val
         
         # Preserving the current tilt value
         tilt = self.get_tilt()
@@ -644,13 +656,17 @@ class PTZ(Camera):
     def set_pan_rel(self, val=0, speed=5):
         """Manually set the PTZ's relative pan position.
         
-        :param val: In integer, the relative pan position (0-65535).
+        :param val: In integer, the relative pan position (from -32767 to 32767).
         :param speed: In integer, the speed of the movement (0-24).
         :return: True if successful, False if not.
         """
-        if val < 0 or val > 65535 or type(val) != int:
-            print('Invalid absolute pan value')
+        if val < -32767 or val > 32767 or type(val) != int:
+            print('Invalid relative pan value')
             return False
+        
+        # Calculating the parameter values
+        if val < 0:
+            val = 65535 + val
         
         # Creating the parameter values
         p = self._zero_pad(hex(val)[2:], 4)
@@ -666,13 +682,17 @@ class PTZ(Camera):
     def set_tilt(self, val=0, speed=5):
         """Manually set the PTZ's absolute tilt position.
         
-        :param val: In integer, the absolute tilt position (0-65535).
+        :param val: In integer, the absolute tilt position (from -32767 to 32767).
         :param speed: In integer, the speed of the movement (0-24).
         :return: True if successful, False if not.
         """
-        if val < 0 or val > 65535 or type(val) != int:
+        if val < -32767 or val > 32767 or type(val) != int:
             print('Invalid absolute tilt value')
             return False
+        
+        # Calculating the parameter values
+        if val < 0:
+            val = 65535 + val
         
         # Preserving the current pan value
         pan = self.get_pan()
@@ -691,13 +711,17 @@ class PTZ(Camera):
     def set_tilt_rel(self, val=0, speed=5):
         """Manually set the PTZ's relative tilt position.
         
-        :param val: In integer, the relative tilt position (0-65535).
+        :param val: In integer, the relative tilt position (from -32767 to 32767).
         :param speed: In integer, the speed of the movement (0-24).
         :return: True if successful, False if not.
         """
-        if val < 0 or val > 65535 or type(val) != int:
-            print('Invalid absolute tilt value')
+        if val < -32767 or val > 32767 or type(val) != int:
+            print('Invalid relative tilt value')
             return False
+        
+        # Calculating the parameter values
+        if val < 0:
+            val = 65535 + val
         
         # Preserving the current pan value
         pan = self.get_pan()
@@ -709,6 +733,49 @@ class PTZ(Camera):
         
         # Creating the command hex-string
         hs = f'81010603{s}{s}0{p[0]}0{p[1]}0{p[2]}0{p[3]}0{t[0]}0{t[1]}0{t[2]}0{t[3]}FF'
+        
+        # Sending the command
+        return self.comm(hs)
+    
+    def set_zoom(self, val=0):
+        """Sets the absolute zoom value of the PTZ.
+        
+        :param val: In integer, the absolute zoom position (from 0 to 65535).
+        :return: True if successful, False if not.
+        """
+        if val < 0 or val > 65535 or type(val) != int:
+            print('Invalid absolute zoom value')
+            return False
+        
+        # Creating the parameter values
+        z = self._zero_pad(hex(val)[2:], 4)
+        
+        # Creating the command hex-string
+        hs = f'810104470{z[0]}0{z[1]}0{z[2]}0{z[3]}FF'
+        
+        # Sending the command
+        return self.comm(hs)
+    
+    def set_zoom_rel(self, val=0):
+        """Sets the relative zoom value of the PTZ.
+        
+        :param val: In integer, the relative zoom position (from -32767 to 32767).
+        :return: True if successful, False if not.
+        """
+        if val < -32767 or val > 32767 or type(val) != int:
+            print('Invalid relative zoom value')
+            return False
+        
+        # Calculating the parameter values
+        val = self.get_zoom() + val
+        if val < 0:
+            val = 65535 + val
+        
+        # Creating the parameter values
+        z = self._zero_pad(hex(val)[2:], 4)
+        
+        # Creating the command hex-string
+        hs = f'810104470{z[0]}0{z[1]}0{z[2]}0{z[3]}FF'
         
         # Sending the command
         return self.comm(hs)
