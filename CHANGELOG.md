@@ -1,14 +1,26 @@
 # pyvisca CHANGELOG
 
-## v0.0.1
+## v0.1.1
 
-- Info: Initial forking of the repository from the work by Matthew Mage
-- New: Panning the camera left, up, right, and down
-- New: Homing the camera position to its default position
-- New: Enabling autofocus of camera lens
-- New: Setting picture effect (on supported devices only)
-- New: Setting white balance
-- New: Move relative to the current position
+- New: Ability to get the current absolute pan and tilt values
+- New: Ability to set absolute and relative pan and tilt values
+
+## v0.0.5
+
+- Fixed: TypeError when trying to read input package from PTZ
+- New: (Backend) Ability to send inquiry and directly receive input package
+
+## v0.0.4
+
+- New: Manual adjustment of camera's gain control
+- New: Freezing the camera view
+
+## v0.0.3
+
+- Fixed: Cannot close port when opened
+- New: Manual setting of camera focus
+- New: Manual adjustment of camera aperture
+- New: Toggling on/off of backlight compensation
 
 ## v0.0.2
 
@@ -19,24 +31,12 @@
 - New: Ability to change iris setting
 - New: Ability to change brightness setting
 
-## v0.0.3
+## v0.0.1
 
-- Fixed: Cannot close port when opened
-- New: Manual setting of camera focus
-- New: Manual adjustment of camera aperture
-- New: Toggling on/off of backlight compensation
-
-## v0.0.4
-
-- New: Manual adjustment of camera's gain control
-- New: Freezing the camera view
-
-## v0.0.5
-
-- Fixed: TypeError when trying to read input package from PTZ
-- New: (Backend) Ability to send inquiry and directly receive input package
-
-## v0.1.1
-
-- New: Ability to get the current absolute pan and tilt values
-- New: Ability to set absolute and relative pan and tilt values
+- Info: Initial forking of the repository from the work by Matthew Mage
+- New: Panning the camera left, up, right, and down
+- New: Homing the camera position to its default position
+- New: Enabling autofocus of camera lens
+- New: Setting picture effect (on supported devices only)
+- New: Setting white balance
+- New: Move relative to the current position
