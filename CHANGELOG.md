@@ -1,5 +1,8 @@
 # pyvisca CHANGELOG
 
+## v0.1.3
+- Fixed: When the relative zoom value is lower than 0, the camera zooms out instead
+
 ## v0.1.2
 - New: Ability to get the current absolute zoom value
 - New: Ability to set absolute and relative zoom values

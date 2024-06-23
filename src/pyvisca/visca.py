@@ -766,6 +766,10 @@ class PTZ(Camera):
             print('Invalid relative zoom value')
             return False
         
+        # Preventing impossible zoom movements
+        if (val + self.get_zoom()) < 0:
+            val = 0 - self.get_zoom()
+        
         # Calculating the parameter values
         val = self.get_zoom() + val
         if val < 0:
