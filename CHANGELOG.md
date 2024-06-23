@@ -34,4 +34,9 @@
 ## v0.0.5
 
 - Fixed: TypeError when trying to read input package from PTZ
-- Added: Ability to send inquiry and directly receive input package
+- New: (Backend) Ability to send inquiry and directly receive input package
+
+## v0.1.1
+
+- New: Ability to get the current absolute pan and tilt values
+- New: Ability to set absolute and relative pan and tilt values

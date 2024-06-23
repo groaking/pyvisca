@@ -132,6 +132,27 @@ class PTZ(Camera):
         h2 = '0' + h2 if len(h2) < 2 else h2
         return self.comm(string.replace('VV', h1).replace('WW', h2))
     
+    def _zero_pad(self, num: str, digit: int):
+        """Pad any arbitrary number with zeros.
+        
+        :param num: The number to pad with zero.
+        :param digit: The number's digit length to consider.
+                      (Must be greater than or equal to the digit length of "num")
+        :return: A string of padded number.
+        """
+        # Convert "num" to string
+        num = str(num)
+        
+        # Apply zero-padding operation
+        num_padded = ''
+        if len(num) < digit:
+            h = digit - len(num)
+            for i in range(h):
+                num_padded += '0'
+        
+        # Return the zero-padded value
+        return num_padded + num
+    
     def aperture_down(self):
         """Turn down the camera's aperture value (non-variable).
         
@@ -311,17 +332,30 @@ class PTZ(Camera):
         """
         return self.comm('8101040C02FF')
 
-    def get_speed(self, amount=5):
+    def get_pan(self):
+        """Get the PTZ's current absolute pan position.
         
-        self.comm('81090611FF')
-        return super(self.__class__, self).read(amount=amount)
+        :return: The absolute pan value as an integer, converted from hex.
+        """
+        raw = self.inq('81090612FF')[5:12]
+        return int(f'{raw[0]}{raw[2]}{raw[4]}{raw[6]}', 16)
 
-    def get_status(self, amount=5):
+    def get_tilt(self):
+        """Get the PTZ's current absolute tilt position.
         
-        #self.comm('81090610FF')
-        self.comm('81090612FF')
-        return super(self.__class__, self).read(amount=amount)
+        :return: The absolute tilt value as an integer, converted from hex.
+        """
+        raw = self.inq('81090612FF')[13:20]
+        return int(f'{raw[0]}{raw[2]}{raw[4]}{raw[6]}', 16)
 
+    def get_zoom(self):
+        """Get the PTZ's current absolute zoom position.
+        
+        :return: The absolute zoom value as an integer, converted from hex.
+        """
+        raw = self.inq('81090447FF')[5:12]
+        return int(f'{raw[0]}{raw[2]}{raw[4]}{raw[6]}', 16)
+        
     def home(self):
         """Moves camera to home position.
 
@@ -582,11 +616,107 @@ class PTZ(Camera):
     def right_up(self, pan=5, tilt=5):
         return self._move('81010601VVWW0201FF', pan, tilt)
 
+    def set_pan(self, val=0, speed=5):
+        """Manually set the PTZ's absolute pan position.
+        
+        :param val: In integer, the absolute pan position (0-65535).
+        :param speed: In integer, the speed of the movement (0-24).
+        :return: True if successful, False if not.
+        """
+        if val < 0 or val > 65535 or type(val) != int:
+            print('Invalid absolute pan value')
+            return False
+        
+        # Preserving the current tilt value
+        tilt = self.get_tilt()
+        
+        # Creating the parameter values
+        p = self._zero_pad(hex(val)[2:], 4)
+        t = self._zero_pad(hex(tilt)[2:], 4)
+        s = self._zero_pad(hex(speed)[2:], 2)
+        
+        # Creating the command hex-string
+        hs = f'81010602{s}{s}0{p[0]}0{p[1]}0{p[2]}0{p[3]}0{t[0]}0{t[1]}0{t[2]}0{t[3]}FF'
+        
+        # Sending the command
+        return self.comm(hs)
+
+    def set_pan_rel(self, val=0, speed=5):
+        """Manually set the PTZ's relative pan position.
+        
+        :param val: In integer, the relative pan position (0-65535).
+        :param speed: In integer, the speed of the movement (0-24).
+        :return: True if successful, False if not.
+        """
+        if val < 0 or val > 65535 or type(val) != int:
+            print('Invalid absolute pan value')
+            return False
+        
+        # Creating the parameter values
+        p = self._zero_pad(hex(val)[2:], 4)
+        t = '0000'
+        s = self._zero_pad(hex(speed)[2:], 2)
+        
+        # Creating the command hex-string
+        hs = f'81010603{s}{s}0{p[0]}0{p[1]}0{p[2]}0{p[3]}0{t[0]}0{t[1]}0{t[2]}0{t[3]}FF'
+        
+        # Sending the command
+        return self.comm(hs)
+
+    def set_tilt(self, val=0, speed=5):
+        """Manually set the PTZ's absolute tilt position.
+        
+        :param val: In integer, the absolute tilt position (0-65535).
+        :param speed: In integer, the speed of the movement (0-24).
+        :return: True if successful, False if not.
+        """
+        if val < 0 or val > 65535 or type(val) != int:
+            print('Invalid absolute tilt value')
+            return False
+        
+        # Preserving the current pan value
+        pan = self.get_pan()
+        
+        # Creating the parameter values
+        p = self._zero_pad(hex(pan)[2:], 4)
+        t = self._zero_pad(hex(val)[2:], 4)
+        s = self._zero_pad(hex(speed)[2:], 2)
+        
+        # Creating the command hex-string
+        hs = f'81010602{s}{s}0{p[0]}0{p[1]}0{p[2]}0{p[3]}0{t[0]}0{t[1]}0{t[2]}0{t[3]}FF'
+        
+        # Sending the command
+        return self.comm(hs)
+
+    def set_tilt_rel(self, val=0, speed=5):
+        """Manually set the PTZ's relative tilt position.
+        
+        :param val: In integer, the relative tilt position (0-65535).
+        :param speed: In integer, the speed of the movement (0-24).
+        :return: True if successful, False if not.
+        """
+        if val < 0 or val > 65535 or type(val) != int:
+            print('Invalid absolute tilt value')
+            return False
+        
+        # Preserving the current pan value
+        pan = self.get_pan()
+        
+        # Creating the parameter values
+        p = '0000'
+        t = self._zero_pad(hex(val)[2:], 4)
+        s = self._zero_pad(hex(speed)[2:], 2)
+        
+        # Creating the command hex-string
+        hs = f'81010603{s}{s}0{p[0]}0{p[1]}0{p[2]}0{p[3]}0{t[0]}0{t[1]}0{t[2]}0{t[3]}FF'
+        
+        # Sending the command
+        return self.comm(hs)
+
     def stop(self):
         """Stops camera movement (pan/tilt).
 
         :return: True if successful, False if not.
-        :rtype: bool
         """
         return self.comm('8101060115150303FF')
 
