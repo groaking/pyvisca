@@ -1,6 +1,6 @@
 [project]
 name = "pyvisca"
-version = "0.1.3"
+version = "0.1.4"
 authors = [
     { name = "Samarthya Lykamanuella", email = "93555329+groaking@users.noreply.github.com" },
 ]

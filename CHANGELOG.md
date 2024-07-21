@@ -1,5 +1,9 @@
 # pyvisca CHANGELOG
 
+## v0.1.4
+
+- Fixed: Write timeout exception during program execution
+
 ## v0.1.3
 - Fixed: When the relative zoom value is lower than 0, the camera zooms out instead
 

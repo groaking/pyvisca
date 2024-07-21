@@ -28,7 +28,9 @@ class Camera(object):
         :param output: Outbound serial port string. (default: 'COM10')
         :type output: str
         """
-        self._output = serial.Serial(output)
+        # Setting "write_timeout" to zero prevents "write timeout exception".
+        # SOURCE: https://stackoverflow.com/a/18314684
+        self._output = serial.Serial(output, writeTimeout=0, write_timeout=0)
 
     @staticmethod
     def close():
@@ -69,7 +71,7 @@ class Camera(object):
         :rtype: bool
         """
         if not self._output.isOpen():
-            self._output = serial.Serial(serial_port)
+            self._output = serial.Serial(serial_port, writeTimeout=0, write_timeout=0)
             self._output.open()
             return True
         else:
