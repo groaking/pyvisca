@@ -1,5 +1,11 @@
 # pyvisca CHANGELOG
 
+## v0.1.5
+
+- New: Ability to get power/stand-by state
+- New: Added the ability to reload the current PTZ camera's serial port
+- Fix: "self" not found when calling Camera.close()
+
 ## v0.1.4
 
 - Fixed: Write timeout exception during program execution

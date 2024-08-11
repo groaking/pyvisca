@@ -28,12 +28,13 @@ class Camera(object):
         :param output: Outbound serial port string. (default: 'COM10')
         :type output: str
         """
+        self.serial_port = output
+        
         # Setting "write_timeout" to zero prevents "write timeout exception".
         # SOURCE: https://stackoverflow.com/a/18314684
         self._output = serial.Serial(output, writeTimeout=0, write_timeout=0)
-
-    @staticmethod
-    def close():
+    
+    def close(self):
         """Closes current serial port.
 
         :param serial_port: Serial port to modify.
@@ -61,22 +62,34 @@ class Camera(object):
         except Exception as e:
             print(com, e)
             return False
-
-    @staticmethod
-    def open(serial_port):
+    
+    def open(self, serial_port=''):
         """Opens serial port.
 
         :param serial_port: Serial port to modify.
         :return: True if successful, False if not.
         :rtype: bool
         """
+        serial_port = self.serial_port if serial_port == '' else serial_port
+        
         if not self._output.isOpen():
             self._output = serial.Serial(serial_port, writeTimeout=0, write_timeout=0)
-            self._output.open()
             return True
         else:
             print("Error opening serial port: Already open.")
             return False
+    
+    def reset_port(self):
+        """Resets the current port and reload that same port.
+        This function attempts to close the serial port and re-open the same port.
+        """
+        # You must flush the buffer before closing, to avoid infinite closing hangs.
+        # SOURCE: https://github.com/pyserial/pyserial/issues/226#issuecomment-520350383
+        self._output.reset_input_buffer()
+        
+        # Reloading the port
+        self._output.close()
+        self._output.open()
         
     def read(self):
         """When receiving an input buffer, this function reads all pending input bytes.
@@ -346,6 +359,20 @@ class PTZ(Camera):
         """
         raw = self.inq('81090612FF')[5:12]
         return int(f'{raw[0]}{raw[2]}{raw[4]}{raw[6]}', 16)
+    
+    def get_power(self):
+        """Get the PTZ's current standby state.
+        
+        :return: 1 if the PTZ is already on, 0 if it is in standby mode.
+        """
+        raw = self.inq('81090400FF')[4:6]
+        if raw == '02':
+            return 1
+        elif raw == '03':
+            return 0
+        else:
+			# Unexpected standby state return code.
+            return -1
 
     def get_tilt(self):
         """Get the PTZ's current absolute tilt position.
